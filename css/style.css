@@ -7,7 +7,7 @@ input { font: inherit; }
 /* ---------- 폰 틀: PC에선 가운데 폰 모양, 휴대폰에선 전체 화면 ---------- */
 #stage { height: 100%; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 50% 30%, #1b1b28, #07070b 70%); }
-#phone { position: relative; width: min(400px, calc((100dvh - 40px) * 0.47)); height: min(860px, calc(100dvh - 40px));
+#phone { position: relative; container-type: inline-size; width: min(400px, calc(100vw - 24px), max(300px, calc((100dvh - 40px) * 0.47))); height: min(860px, calc(100dvh - 40px));
   background: #0b0b10; border-radius: 44px; overflow: hidden;
   box-shadow: 0 0 0 10px #1d1d24, 0 0 0 12px #34343f, 0 30px 80px rgba(0,0,0,.7); }
 @media (max-width: 560px), (max-height: 520px) {
@@ -18,23 +18,23 @@ input { font: inherit; }
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
 
 #statusbar { position: absolute; top: 0; left: 0; right: 0; height: 40px; padding: 12px 24px 0; z-index: 5;
-  display: flex; gap: 8px; font-size: 13px; font-weight: 600; pointer-events: none; }
+  display: flex; gap: 8px; font-size: 13px; font-weight: 600; pointer-events: none; white-space: nowrap; }
 #statusbar .sb-right { margin-left: auto; font-size: 11px; opacity: .85; }
 #sb-date { opacity: .7; font-weight: 500; }
 
 #screen { position: absolute; inset: 0; padding-top: 40px; display: flex; flex-direction: column; }
 
 /* ---------- 홈 화면 ---------- */
-.home { flex: 1; display: flex; flex-direction: column; padding: 18px 18px 14px;
+.home { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 18px 14px 14px;
   background: linear-gradient(170deg, #1c2340 0%, #2a1f38 55%, #3a2633 100%); }
 .widget { background: rgba(255,255,255,.1); backdrop-filter: blur(10px); border-radius: 22px; padding: 16px 18px; margin-bottom: 22px; }
 .widget .big { font-size: 40px; font-weight: 300; letter-spacing: -1px; }
 .widget .small { font-size: 14px; opacity: .8; }
-.apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 8px; }
-.app { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11.5px; position: relative; }
-.app .ic { width: 58px; height: 58px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 28px;
+.apps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 6px; }
+.app { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11.5px; position: relative; min-width: 0; white-space: nowrap; }
+.app .ic { width: min(58px, 100%); height: auto; aspect-ratio: 1; border-radius: 26%; display: flex; align-items: center; justify-content: center; font-size: min(28px, 7.5cqw);
   box-shadow: 0 3px 10px rgba(0,0,0,.3); }
-.badge { position: absolute; top: -5px; right: 6px; min-width: 20px; height: 20px; border-radius: 10px; background: #ff3b30;
+.badge { position: absolute; top: -5px; right: max(0px, calc(50% - 35px)); min-width: 20px; height: 20px; border-radius: 10px; background: #ff3b30;
   font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
 .dock { margin-top: auto; }
 .advance { width: 100%; padding: 15px; border-radius: 18px; background: rgba(255,255,255,.14); font-size: 15px; font-weight: 600;
@@ -211,3 +211,10 @@ input { font: inherit; }
 .title.over { background: #000; }
 .title.end { background: #000; }
 .title .last { font-size: 22px; letter-spacing: 2px; color: #d64545; opacity: 0; animation: fadein 3s 1s forwards; text-align: center; }
+
+/* 좁은 폰 화면 */
+@container (max-width: 340px) {
+  #statusbar .sb-right { display: none; }
+  .advance small { display: none; }
+  .widget .big { font-size: 34px; }
+}
