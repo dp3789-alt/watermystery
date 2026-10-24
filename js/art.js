@@ -55,14 +55,24 @@ window.ART = (function () {
       <path d="M95 300 Q100 190 150 186 Q200 190 205 300Z" fill="#c9a0a0"/>
       <path d="M104 118 Q106 60 150 62 Q196 60 198 120 Q200 190 186 210 L114 210 Q100 190 104 118Z" fill="#2a1d1d"/>
       <circle cx="150" cy="128" r="36" fill="#e8c3b0"/>`),
+    trunk: () => wrap(`<rect width="300" height="300" fill="#121214"/>`, `
+      <rect x="20" y="60" width="260" height="200" rx="10" fill="#1d1d22" stroke="#2c2c34" stroke-width="4"/>
+      <circle cx="150" cy="160" r="70" fill="#0c0c0e" stroke="#26262c" stroke-width="10"/><circle cx="150" cy="160" r="22" fill="#2a2a30"/>
+      <rect x="70" y="200" width="70" height="40" rx="4" fill="#d9d4c7" transform="rotate(-8 105 220)"/>
+      <text x="80" y="226" font-size="13" fill="#7a2f2f" font-family="sans-serif" transform="rotate(-8 105 220)">약 봉투</text>
+      <rect x="160" y="196" width="80" height="46" rx="3" fill="#3b5d7a"/>
+      <text x="170" y="224" font-size="13" fill="#e8eef4" font-family="sans-serif">18650 ×2</text>
+      <path d="M0 0 H300 V40 H0Z" fill="#000" opacity=".6"/>`),
     board: () => wrap(`<rect width="300" height="300" fill="#22392f"/>`, `
       <rect x="14" y="14" width="272" height="230" fill="#2f4d3f" stroke="#6b5a3a" stroke-width="8"/>
       <g stroke="#e8efe8" stroke-width="2" fill="none" opacity=".85">
         <path d="M40 70 H90 L100 55 L110 85 L120 55 L130 85 L140 70 H180"/>
         <rect x="190" y="58" width="24" height="24"/><path d="M180 70 H190 M214 70 H250 V140 H40 V70"/>
-        <circle cx="70" cy="190" r="6"/><circle cx="110" cy="190" r="6"/><circle cx="150" cy="190" r="6"/>
-        <circle cx="70" cy="220" r="6"/><circle cx="110" cy="220" r="6"/><circle cx="150" cy="220" r="6"/>
-        <path d="M70 190 L110 220 L150 190 L150 220"/>
+        <circle cx="60" cy="170" r="5"/><circle cx="100" cy="170" r="5"/><circle cx="140" cy="170" r="5"/>
+        <circle cx="60" cy="200" r="5"/><circle cx="100" cy="200" r="5"/><circle cx="140" cy="200" r="5"/>
+        <circle cx="60" cy="230" r="5"/><circle cx="100" cy="230" r="5"/><circle cx="140" cy="230" r="5"/>
+        <path d="M60 170 L100 200 L140 170 L140 200 L140 230" stroke-width="3"/>
+        <circle cx="60" cy="170" r="9" stroke-width="1.5"/>
       </g>
       <text x="190" y="205" font-size="16" fill="#e8efe8" opacity=".8" font-family="sans-serif">Li-ion</text>
       <text x="190" y="225" font-size="13" fill="#e8efe8" opacity=".7" font-family="sans-serif">3.7V · 단락↑</text>`)

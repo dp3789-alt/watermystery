@@ -142,7 +142,8 @@ input { font: inherit; }
 /* 장면(나레이션) */
 #overlay { position: absolute; inset: 0; z-index: 40; display: none; }
 #overlay.show { display: flex; }
-.scene { flex: 1; background: rgba(0,0,0,.92); display: flex; flex-direction: column; justify-content: center; padding: 40px 30px; cursor: pointer; }
+.scene { flex: 1; background: rgba(0,0,0,.92); display: flex; flex-direction: column; justify-content: safe center; padding: 50px 30px 70px; cursor: pointer; overflow-y: auto; }
+.scene.dark { background: #000; }
 .scene .line { font-size: 17px; line-height: 1.75; margin: 0 0 14px; opacity: 0; animation: fadein .8s forwards; word-break: keep-all; }
 .scene .date { font-size: 13px; letter-spacing: 2px; opacity: .5; margin-bottom: 28px; }
 .scene .tap { position: absolute; bottom: 40px; left: 0; right: 0; text-align: center; font-size: 12px; opacity: .4; animation: blink 2s infinite; }
@@ -172,3 +173,41 @@ input { font: inherit; }
 .slot button:disabled { opacity: .3; }
 .toggle { margin-left: auto; padding: 6px 14px; border-radius: 14px; background: #2a2a33; }
 .toggle.on { background: #34c759; }
+
+/* 잠금: 글자 입력 */
+.tinput { flex: 1; min-width: 0; background: #22222b; border: 0; border-radius: 12px; padding: 11px 14px; color: #fff; font-size: 16px; outline: none; }
+.tbtn { background: #4ea1ff; color: #fff; border-radius: 12px; padding: 10px 18px; font-weight: 700; white-space: nowrap; }
+.tbtn.ghost { background: #2a2a33; }
+.card-face.dark { background: linear-gradient(135deg, #2b2b33, #0d0d12); border: 1px solid #3a3a44; }
+
+/* SNS */
+.post { padding: 14px 16px 4px; border-bottom: 1px solid #1d1d24; }
+.post-head { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.post-bio { margin: 10px 0 0; font-size: 12.5px; opacity: .65; padding: 8px 10px; border-left: 2px solid #c13584; }
+.post-text { margin: 10px 0 12px; font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; word-break: keep-all; }
+.post .pin-btn { margin: 0 0 12px; }
+
+/* 일기 */
+.diary h3 { font-size: 15px; color: #ffd60a; margin: 22px 0 6px; }
+.diary h3:first-child { margin-top: 0; }
+
+/* 마지막 추리 */
+.accuse { padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+.acc-intro { font-size: 14px; opacity: .7; line-height: 1.6; }
+.accuse fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.accuse legend { font-weight: 700; font-size: 16px; margin-bottom: 8px; padding: 0; }
+.opt { text-align: left; padding: 12px 14px; border-radius: 12px; background: #1d1d25; border: 1px solid #2c2c36; font-size: 14px; line-height: 1.5; word-break: keep-all; }
+.opt.on { background: #3a1f24; border-color: #ff6b6b; }
+.advance.final { background: #8a1f2b; color: #fff; }
+.advance:disabled { opacity: .35; }
+
+/* 엔딩 */
+.callscreen { flex: 1; background: linear-gradient(#1b2a1f, #050806); display: flex; flex-direction: column; align-items: center; padding: 80px 24px 50px; gap: 8px; }
+.call-name { font-size: 44px; font-weight: 300; }
+.call-timer { font-size: 15px; opacity: .6; font-variant-numeric: tabular-nums; }
+.call-lines { flex: 1; width: 100%; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center; }
+.call-lines .line { font-size: 16px; line-height: 1.6; opacity: 0; animation: fadein .8s forwards; margin: 0; }
+.call-end { width: 70px; height: 70px; border-radius: 50%; background: #ff3b30; display: flex; align-items: center; justify-content: center; font-size: 30px; transform: rotate(135deg); }
+.title.over { background: #000; }
+.title.end { background: #000; }
+.title .last { font-size: 22px; letter-spacing: 2px; color: #d64545; opacity: 0; animation: fadein 3s 1s forwards; text-align: center; }
