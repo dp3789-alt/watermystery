@@ -623,12 +623,15 @@
   };
 
   /* ================= 마지막 추리 ================= */
+  /* 잠금을 풀어 단서를 얻은 경우에만 보이는 선택지 */
+  const optOpen = (o) => !o.needs || o.needs.some((f) => state.flags[f]);
   VIEWS.accuse = () => {
     const A = S.accusation, pick = state.flags.pick || [];
+    A.questions.forEach((q, qi) => { if (pick[qi] != null && !optOpen(q.options[pick[qi]])) pick[qi] = null; });
     return shell("마지막 추리", `<div class="accuse">
       <div class="acc-intro">틀리면 되돌릴 수 없다. 범인, 동기, 수법을 모두 맞혀야 한다.</div>
       ${A.questions.map((q, qi) => `<fieldset><legend>${qi + 1}. ${esc(q.q)}</legend>
-        ${q.options.map((o, oi) => `<button class="opt ${pick[qi] === oi ? "on" : ""}" data-q="${qi}" data-o="${oi}">${esc(o)}</button>`).join("")}</fieldset>`).join("")}
+        ${q.options.map((o, oi) => optOpen(o) ? `<button class="opt ${pick[qi] === oi ? "on" : ""}" data-q="${qi}" data-o="${oi}">${esc(o.text || o)}</button>` : "").join("")}</fieldset>`).join("")}
       <button class="advance final" id="acc-go" ${A.questions.every((_, i) => pick[i] != null) ? "" : "disabled"}>지목한다</button>
       <div style="height:20px"></div></div>`);
   };
