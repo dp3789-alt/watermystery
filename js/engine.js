@@ -67,7 +67,8 @@
     const out = [];
     for (const e of ev) {
       const last = out[out.length - 1];
-      if (!e.scene && last && !last.scene && e.t - last.t <= 3 * 6e4) last.items.push(e.item);
+      /* 15분 안에 이어서 온 알림은 한 번에 묶어서 보여 줘요 */
+      if (!e.scene && last && !last.scene && e.t - last.items[last.items.length - 1].t <= 15 * 6e4) last.items.push(e.item);
       else out.push(e.scene ? { t: e.t, scene: e.scene } : { t: e.t, items: [e.item] });
       if (e.scene && e.scene.endDay) break;
     }
@@ -682,7 +683,7 @@
     showScene(E.lines, T("7/14 17:00"), () => {
       state.now = T("7/15 06:10");
       setTimeout(() => {
-        notifyRaw(APPS.search, "연합뉴스 속보", E.news);
+        notifyRaw(APPS.search, "연합뉴스 속보", E.news); ding();
         setTimeout(() => showScene(E.after, null, () => { stack = [{ view: "over", p: {} }]; render(); }, { dark: true }), 3200);
       }, 900);
     }, { dark: true });
@@ -748,7 +749,7 @@
     const ns = nextStep(), d = S.days[state.day];
     if (!ns) return d.final ? finalStep() : sleep();
     busy = true;
-    state.now = ns.t;
+    state.now = ns.items ? ns.items[ns.items.length - 1].t : ns.t;
     if (ns.scene) {
       render();
       showScene(ns.scene.lines, ns.t, () => {
@@ -762,7 +763,7 @@
       return;
     }
     render();
-    ns.items.forEach((it, i) => setTimeout(() => { try { notify(it); } finally { if (i === ns.items.length - 1) busy = false; } }, i * 1100));
+    try { notifyGroup(ns.items); } finally { busy = false; }
   }
   function sleep(force) {
     const d = S.days[state.day];
@@ -776,27 +777,43 @@
     if (state.flags.finalSeen) return enter();
     showScene(d.finalLines || [], state.now, () => { state.flags.finalSeen = 1; enter(); });
   }
-  function notifyRaw(app, title, body, onClick) {
+  function notifyRaw(app, title, lines, onClick) {
+    if (!Array.isArray(lines)) lines = [lines];
     const el = document.createElement("button");
     el.className = "notif";
-    el.innerHTML = `<div class="ic" style="background:${app.bg}">${app.ic}</div><div style="flex:1;min-width:0"><div style="display:flex"><span class="nt">${esc(title)}</span><span class="nm">지금</span></div><div class="nb">${esc(body)}</div></div>`;
+    const more = lines.length > 4 ? `<div class="nb more">외 ${lines.length - 4}개</div>` : "";
+    el.innerHTML = `<div class="ic" style="background:${app.bg}">${app.ic}</div><div style="flex:1;min-width:0"><div style="display:flex"><span class="nt">${esc(title)}</span><span class="nm">${lines.length > 1 ? lines.length + "개 · " : ""}지금</span></div>${lines.slice(0, 4).map((l) => `<div class="nb">${esc(l)}</div>`).join("")}${more}</div>`;
     el.onclick = () => { el.remove(); onClick && onClick(); };
     notifLayer.appendChild(el);
-    while (notifLayer.children.length > 3) notifLayer.firstChild.remove();
-    ding();
-    setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, 5000);
+    while (notifLayer.children.length > 4) notifLayer.firstChild.remove();
+    setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 320); }, 4000 + lines.length * 1200);
   }
-  function notify(it) {
-    const d = it.data;
-    const n = {
-      msg: () => [APPS.messenger, it.thread.name, d.text],
-      call: () => [APPS.calls, "부재중 전화", d.name],
-      card: () => [APPS.card, "카드 승인", `${d.shop} ${won(d.amount)}`],
-      mail: () => [APPS.mail, d.from, d.subject],
-      news: () => [APPS.search, d.press + " 속보", d.title],
-      dm: () => [APPS.sns, "한상철 (@sea_debt)", d.text]
-    }[it.kind]();
-    notifyRaw(n[0], n[1], n[2], () => open(it));
+  /* 같은 대화방·같은 앱에서 온 알림은 배너 하나로 합쳐서 한꺼번에 띄워요 */
+  function notifyGroup(list) {
+    const groups = [];
+    list.forEach((it) => {
+      const key = it.kind === "msg" ? "msg:" + it.thread.id : it.kind;
+      let g = groups.find((x) => x.key === key);
+      if (!g) groups.push(g = { key, items: [] });
+      g.items.push(it);
+    });
+    groups.forEach((g) => {
+      const it = g.items[0], many = g.items.length > 1;
+      const head = {
+        msg: () => [APPS.messenger, it.thread.name],
+        call: () => [APPS.calls, "부재중 전화"],
+        card: () => [APPS.card, "카드 승인"],
+        mail: () => [APPS.mail, many ? "새 메일" : it.data.from],
+        news: () => [APPS.search, many ? "뉴스 속보" : it.data.press + " 속보"],
+        dm: () => [APPS.sns, "한상철 (@sea_debt)"]
+      }[it.kind]();
+      const line = (x) => ({
+        msg: () => x.data.text, call: () => x.data.name, card: () => `${x.data.shop} ${won(x.data.amount)}`,
+        mail: () => many ? `${x.data.from}: ${x.data.subject}` : x.data.subject, news: () => x.data.title, dm: () => x.data.text
+      })[x.kind]();
+      notifyRaw(head[0], head[1], g.items.map(line), () => open(g.items[g.items.length - 1]));
+    });
+    ding();
     render();
   }
 
