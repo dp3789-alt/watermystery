@@ -225,7 +225,7 @@
     const map = { msg: ["thread", { id: it.thread && it.thread.id }], call: ["callDetail", { id: it.id }], card: ["cardDetail", { id: it.id }],
       card2: ["cardDetail", { id: it.id }], mail: ["mailDetail", { id: it.id }], mail2: ["mailDetail", { id: it.id }],
       news: ["doc", { id: it.id }], web: ["doc", { id: it.id }], photo: ["photo", { id: it.id }], dphoto: ["photo", { id: it.id }],
-      post: ["sns", { tab: "feed" }], dm: ["sns", { tab: "dm" }], secret: ["search", { tab: "secret" }] };
+      post: ["sns", { tab: "feed" }], dm: ["sns", { tab: "dm" }], secret: ["doc", { id: it.id }] };
     const [v, p] = map[it.kind]; go(v, p);
   }
 
@@ -499,7 +499,7 @@
     } else if (tab === "secret") {
       if (!state.flags.secret) return shell("시크릿 모드", patternHtml(), { top });
       const v = Object.values(items).filter((it) => it.kind === "secret" && visible(it)).sort((a, b) => b.t - a.t);
-      body = `<div class="section">시크릿 모드 검색 기록 · 누르면 수첩에 적어요</div>` + v.map((it) => `<button class="row" data-pinrow="${esc(it.id)}"><div class="call-ic">🕶</div><div class="main"><div class="t1" style="font-weight:400;white-space:normal">${esc(it.data.q)}</div><div class="t2">${full(it.t)}</div></div><div class="meta">${pinned(it.id) ? "📌" : ""}</div></button>`).join("");
+      body = `<div class="section">시크릿 모드 검색 기록</div>` + v.map((it) => `<button class="row" data-go="doc" data-p="${P({ id: it.id })}"><div class="call-ic">🕶</div><div class="main"><div class="t1" style="font-weight:400;white-space:normal">${esc(it.data.q)}</div><div class="t2">${full(it.t)}</div></div><div class="meta">${pinned(it.id) ? "📌" : ""}</div></button>`).join("");
     } else {
       const res = q ? searchResults(q) : null;
       const hist = [...state.queries].reverse().concat(S.searchHistory).filter((x, i, a) => a.indexOf(x) === i).slice(0, 8);
@@ -520,7 +520,6 @@
     if (tab === "secret") {
       if (state.flags.secret) {
         thinkText("secret_open", S.secret.thought);
-        screen.querySelectorAll("[data-pinrow]").forEach((b) => b.addEventListener("click", () => { togglePin(b.dataset.pinrow); render(); }));
       } else bindPattern();
     }
   };
@@ -560,11 +559,21 @@
       else { $("#lockmsg").textContent = "패턴이 일치하지 않습니다."; seq = []; draw(); }
     };
   }
+  /* 시크릿 검색 기록의 결과 페이지: r 직접 적기, 또는 r.ref 로 일반 검색 결과 재사용 */
+  function secretResult(it) {
+    const r = it.data.r || {};
+    if (!r.ref) return r;
+    const hit = S.search.find((x) => x.keys.some((k) => norm(k) === norm(r.ref)));
+    if (!hit) return {};
+    return hit.newsId ? Object.assign({}, items[hit.newsId].data, { url: items[hit.newsId].data.press }) : hit;
+  }
   VIEWS.doc = ({ id }) => {
-    const it = items[id], d = it.data;
+    const it = items[id];
+    const d = it.kind === "secret" ? secretResult(it) : it.data;
     const table = d.table ? `<div style="overflow-x:auto"><table>${d.table.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>` : "";
     const meta = it.kind === "news" ? `${esc(d.press)} · ${full(it.t)}` : esc(d.url);
-    return shell(it.kind === "news" ? "뉴스" : "검색", `<div class="doc"><h3>${esc(d.title)}</h3><div class="from">${meta}</div>${table}<div class="body">${esc(d.body || "")}</div></div>${pinBtn(id)}`);
+    const sq = it.kind === "secret" ? `<div class="secret-q">🕶 "${esc(it.data.q)}" · ${full(it.t)} 검색</div>` : "";
+    return shell(it.kind === "news" ? "뉴스" : it.kind === "secret" ? "시크릿 모드" : "검색", `${sq}<div class="doc"><h3>${esc(d.title)}</h3><div class="from">${meta}</div>${table}<div class="body">${esc(d.body || "")}</div></div>${pinBtn(id)}`);
   };
   AFTER.doc = ({ id }) => { state.read[id] = 1; bindPins(); think(items[id]); };
 
