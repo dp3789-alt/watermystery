@@ -144,7 +144,9 @@
     const bar = state && !NO_BAR.includes(cur.view);
     $("#sb-time").textContent = bar ? hhmm(state.now) : "";
     $("#sb-date").textContent = bar ? dateLabel(state.now) : "";
+    phone.appendChild(toast);
     screen.innerHTML = VIEWS[cur.view](cur.p);
+    placeToast();
     screen.querySelectorAll("[data-go]").forEach((el) => el.addEventListener("click", () => {
       const p = el.dataset.p ? JSON.parse(el.dataset.p) : {}; go(el.dataset.go, p);
     }));
@@ -176,9 +178,18 @@
   }
   function showThought() {
     if (toast.classList.contains("show") || !thoughtQ.length) return;
-    const q = thoughtQ.shift(); state.thoughts[q.key] = 1; autosave();
-    toast.innerHTML = `<div class="lab">속마음 · 눌러서 닫기</div>${esc(q.text)}`;
+    const q = thoughtQ.shift(); state.thoughts[q.key] = 1;
+    (state.thoughtLog = state.thoughtLog || []).push({ key: q.key, text: q.text, t: state.now }); autosave();
+    const b = $("#body"), atBottom = b && b.scrollHeight - b.scrollTop - b.clientHeight < 40;
+    toast.innerHTML = `<div class="lab">속마음 · 눌러서 닫기 · 수첩에서 다시 볼 수 있어요</div>${esc(q.text)}`;
     toast.classList.add("show");
+    if (b && atBottom) b.scrollTop = b.scrollHeight;
+  }
+  /* 속마음 칸은 앱 화면 아래쪽에 자리를 차지해서, 메시지를 가리지 않아요 */
+  function placeToast() {
+    const view = screen.querySelector(".app-view"), bar = view && view.querySelector(".home-bar");
+    if (bar) { view.insertBefore(toast, bar); toast.classList.add("inflow"); }
+    else toast.classList.remove("inflow");
   }
   function clearThoughts() { thoughtQ.length = 0; }
   toast.addEventListener("click", () => { toast.classList.remove("show"); setTimeout(showThought, 120); });
@@ -454,7 +465,8 @@
   /* 메모 (두 번째 인격의 일기) */
   VIEWS.memo = () => {
     if (!state.flags.memo) return pinView("메모", S.memo.question, S.memo.answer.length, "잠긴 메모 · 1개");
-    return shell("메모", `<div class="doc diary">${S.memo.entries.map((e) => `<h3>${esc(e.d)}</h3><div class="body">${esc(e.text)}</div>`).join("")}</div>`);
+    const es = S.memo.entries.filter((e) => !e.t || T(e.t) <= state.now);
+    return shell("메모", es.length ? `<div class="doc diary">${es.map((e) => `<h3>${esc(e.d)}</h3><div class="body">${esc(e.text)}</div>`).join("")}</div>` : `<div class="empty">아직 아무것도 적혀 있지 않다.</div>`);
   };
   AFTER.memo = () => {
     if (state.flags.memo) { thinkText("memo_open", S.memo.thought); return; }
@@ -579,13 +591,20 @@
   };
 
   /* 수첩 (핀 모음) */
-  VIEWS.notes = () => {
+  VIEWS.notes = ({ tab = "clues" }) => {
+    const top = tabsHtml([["clues", "단서"], ["thoughts", "속마음"]], tab);
+    if (tab === "thoughts") {
+      const log = (state.thoughtLog || []).slice().reverse();
+      return shell("수사 수첩", log.length ? `<div class="section">떠올랐던 속마음 · ${log.length}개</div>` + log.map((q) => `
+        <div class="row" style="display:block"><div class="t2" style="margin:0 0 4px">${full(q.t)}</div><div style="font-size:14.5px;line-height:1.6;white-space:pre-wrap;word-break:keep-all">${esc(q.text)}</div></div>`).join("")
+        : `<div class="empty">아직 떠오른 속마음이 없다.</div>`, { top });
+    }
     const v = state.pins.map((id) => items[id]).filter(Boolean).sort((a, b) => (a.kind === "web") - (b.kind === "web") || a.t - b.t);
     return shell("수사 수첩", v.length ? `<div class="section">시간 순서대로 · ${v.length}개</div>` + v.map((it) => `
       <button class="row" data-open="${esc(it.id)}"><div class="main"><div class="t1" style="white-space:normal;font-weight:500">${esc(label(it))}</div><div class="t2">${it.kind === "web" ? esc(it.data.url) : full(it.t)}</div></div></button>`).join("")
-      : `<div class="empty">아직 적어 둔 단서가 없다.<br><br>메시지·메일·사진·뉴스에서<br>📌 를 눌러 단서를 모아 보세요.</div>`);
+      : `<div class="empty">아직 적어 둔 단서가 없다.<br><br>메시지·메일·사진·뉴스에서<br>📌 를 눌러 단서를 모아 보세요.</div>`, { top });
   };
-  AFTER.notes = () => screen.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => open(items[b.dataset.open])));
+  AFTER.notes = () => bindTabs() || screen.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => open(items[b.dataset.open])));
 
   /* 설정 · 저장 슬롯 */
   VIEWS.settings = () => shell("설정", `

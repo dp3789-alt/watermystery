@@ -218,3 +218,6 @@ input { font: inherit; }
   .advance small { display: none; }
   .widget .big { font-size: 34px; }
 }
+
+/* 속마음: 앱 화면 아래쪽 칸 (메시지를 가리지 않음) */
+#toast.inflow { position: static; margin: 6px 10px 4px; max-height: 38%; overflow-y: auto; flex-shrink: 0; box-shadow: none; }
