@@ -211,6 +211,14 @@ input { font: inherit; }
 .title h1 { text-shadow: 0 0 30px rgba(140,180,255,.35); }
 .title .btn:disabled { opacity: .3; }
 .title .tip { font-size: 12px; opacity: .4; margin-top: 18px; text-align: center; line-height: 1.6; }
+/* 언어 선택 (처음 화면 위쪽 · 설정) */
+.lang-pick { display: inline-flex; padding: 3px; border-radius: 20px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); gap: 2px; }
+.lang-pick button { padding: 6px 14px; border-radius: 16px; font-size: 13px; opacity: .6; }
+.lang-pick button.on { background: rgba(255,255,255,.18); opacity: 1; font-weight: 600; }
+.title > .lang-pick { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); }
+.lang-pick.small { margin-left: auto; flex-shrink: 0; }
+.lang-pick.small button { padding: 5px 10px; font-size: 12px; }
+html[lang="en"] .title h1 { font-size: 48px; letter-spacing: 6px; }
 
 /* 설정 · 저장 */
 .slot { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #1d1d24; }

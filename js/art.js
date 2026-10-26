@@ -1,4 +1,4 @@
-/* 사진첩 그림 (SVG). 나중에 AI 생성 이미지로 바꿀 수 있어요.
+/* 사진첩 그림 (SVG). 글자가 들어간 그림은 lang("ko"/"en")에 따라 한국어·영어로 바뀌어요. 나중에 AI 생성 이미지로 바꿀 수 있어요.
    이미지 파일을 쓰려면 story.js 사진 항목에 img: "images/파일이름.jpg" 를 넣으면 됩니다.
    모든 그림에 필름 질감(grain)과 가장자리 어둡게(vignette)를 넣어 폰 사진처럼 보이게 했어요. */
 window.ART = (function () {
@@ -116,16 +116,17 @@ window.ART = (function () {
         <ellipse cx="150" cy="190" rx="70" ry="40" fill="#ffc070" opacity=".12" filter="url(#${k}-glow)"/>`, { vig: .6, grain: .2 });
     },
     /* 3/20 22:30 바다정 마감 후: 사장님(꽃무늬), 지훈이 형, 나 */
-    restaurant: () => {
-      const k = "rs";
+    restaurant: (lang) => {
+      const k = "rs", en = lang === "en";
+      const sign = en ? "BADAJEONG" : "바다정", fs = en ? 22 : 28, ls = en ? 4 : 6;
       return wrap(k, floral(`${k}-fl`, "#2a2030", "#b04a5a", "#e0b050") + `
         <linearGradient id="${k}-win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf8a"/><stop offset="1" stop-color="#c8743a"/></linearGradient>
         <linearGradient id="${k}-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2420"/><stop offset="1" stop-color="#0a0908"/></linearGradient>`, `
         <rect width="300" height="300" fill="#0d1218"/>
         <rect x="0" y="0" width="300" height="230" fill="#1a1e24"/>
         <rect x="14" y="20" width="272" height="44" rx="4" fill="#2c2018" stroke="#6a4a2a" stroke-width="2"/>
-        <text x="150" y="53" font-size="28" text-anchor="middle" fill="#ffe2a8" font-family="'Nanum Myeongjo','Batang',serif" font-weight="700" letter-spacing="6">바다정</text>
-        <text x="150" y="53" font-size="28" text-anchor="middle" fill="#ffb84a" font-family="'Nanum Myeongjo','Batang',serif" font-weight="700" letter-spacing="6" filter="url(#${k}-glow)" opacity=".7">바다정</text>
+        <text x="150" y="${en ? 51 : 53}" font-size="${fs}" text-anchor="middle" fill="#ffe2a8" font-family="'Nanum Myeongjo','Batang',serif" font-weight="700" letter-spacing="${ls}">${sign}</text>
+        <text x="150" y="${en ? 51 : 53}" font-size="${fs}" text-anchor="middle" fill="#ffb84a" font-family="'Nanum Myeongjo','Batang',serif" font-weight="700" letter-spacing="${ls}" filter="url(#${k}-glow)" opacity=".7">${sign}</text>
         <rect x="26" y="78" width="160" height="150" fill="url(#${k}-win)"/>
         <g stroke="#3a2a1e" stroke-width="5"><path d="M106 78 V228 M26 150 H186"/></g>
         <g fill="#7a4020" opacity=".55"><rect x="40" y="170" width="50" height="6"/><rect x="120" y="170" width="50" height="6"/><rect x="48" y="176" width="3" height="40"/><rect x="160" y="176" width="3" height="40"/>
@@ -182,8 +183,8 @@ window.ART = (function () {
         <ellipse cx="184" cy="268" rx="12" ry="8" fill="#c08a74"/>`, { vig: .4, grain: .18 });
     },
     /* 7/7 아빠 차 트렁크. 스페어타이어 칸 아래 약 봉투와 배터리 상자 (플래시로 찍은 느낌) */
-    trunk: () => {
-      const k = "tr";
+    trunk: (lang) => {
+      const k = "tr", en = lang === "en";
       return wrap(k, `<radialGradient id="${k}-flash" cx=".5" cy=".62" r=".6"><stop offset="0" stop-color="#4a4a52"/><stop offset=".6" stop-color="#1e1e24"/><stop offset="1" stop-color="#08080a"/></radialGradient>
         <radialGradient id="${k}-tire" cx=".5" cy=".5" r=".5"><stop offset=".3" stop-color="#2a2a2e"/><stop offset=".55" stop-color="#121214"/><stop offset=".8" stop-color="#1e1e22"/><stop offset="1" stop-color="#0a0a0c"/></radialGradient>
         <pattern id="${k}-carpet" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#26262c"/><rect width="2" height="2" fill="#2e2e36"/></pattern>`, `
@@ -200,8 +201,8 @@ window.ART = (function () {
           <rect x="62" y="194" width="86" height="56" rx="3" fill="#ebe6d8"/>
           <path d="M62 194 H148 L140 204 H70Z" fill="#d8d0bc"/>
           <rect x="62" y="210" width="86" height="1.5" fill="#2f7a5a"/>
-          <text x="76" y="230" font-size="14" font-weight="700" fill="#2f7a5a" font-family="sans-serif">약 봉투</text>
-          <text x="76" y="244" font-size="8" fill="#6a6a60" font-family="sans-serif">복용법: 1일 1회 취침 전</text>
+          <text x="76" y="230" font-size="${en ? 11 : 14}" font-weight="700" fill="#2f7a5a" font-family="sans-serif">${en ? "PHARMACY" : "약 봉투"}</text>
+          <text x="76" y="244" font-size="8" fill="#6a6a60" font-family="sans-serif">${en ? "1 tablet at bedtime" : "복용법: 1일 1회 취침 전"}</text>
         </g>
         <g transform="rotate(4 200 218)">
           <rect x="160" y="196" width="84" height="48" rx="2" fill="#2f5d86"/>
@@ -213,8 +214,8 @@ window.ART = (function () {
         <ellipse cx="150" cy="210" rx="110" ry="70" fill="#fff" opacity=".05" filter="url(#${k}-glow)"/>`, { vig: .75, grain: .22 });
     },
     /* 6/13 빈 강의실 칠판. 점 아홉 개 패턴은 1-5-3-6-9 순서 (시크릿 검색 잠금 답) */
-    board: () => {
-      const k = "bd";
+    board: (lang) => {
+      const k = "bd", en = lang === "en";
       return wrap(k, `<filter id="${k}-chalk"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" result="n"/>
           <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2"/></filter>
         <radialGradient id="${k}-slate" cx=".45" cy=".4" r=".8"><stop offset="0" stop-color="#3a5a4a"/><stop offset="1" stop-color="#1e3229"/></radialGradient>
@@ -235,7 +236,7 @@ window.ART = (function () {
             <circle cx="60" cy="170" r="9" stroke-width="1.5"/>
           </g>
           <text x="190" y="205" font-size="16" fill="#eef4ee" opacity=".85" font-family="'Comic Sans MS','Nanum Pen Script',sans-serif">Li-ion</text>
-          <text x="190" y="225" font-size="13" fill="#eef4ee" opacity=".75" font-family="sans-serif">3.7V · 단락↑</text>
+          <text x="190" y="225" font-size="13" fill="#eef4ee" opacity=".75" font-family="sans-serif">3.7V · ${en ? "short↑" : "단락↑"}</text>
           <text x="70" y="114" font-size="11" fill="#f0e0a0" opacity=".7" font-family="sans-serif">R</text><text x="196" y="100" font-size="11" fill="#f0e0a0" opacity=".7" font-family="sans-serif">SW</text>
         </g>
         <path d="M30 40 Q90 30 150 44" stroke="#fff" stroke-width="16" opacity=".05" fill="none" filter="url(#${k}-soft)"/>
