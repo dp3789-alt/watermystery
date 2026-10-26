@@ -1,7 +1,7 @@
 /* 게임 엔진. 스토리 내용은 story.js 에 있고, 여기는 화면과 진행 규칙만 다룹니다. */
 (function () {
   "use strict";
-  const S = window.STORY, ART = window.ART;
+  const S = window.STORY, ART = window.ART, IC = window.ICONS;
   const $ = (s) => document.querySelector(s);
   const screen = $("#screen"), overlay = $("#overlay"), toast = $("#toast"), notifLayer = $("#notif-layer"), phone = $("#phone");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -113,17 +113,21 @@
 
   /* ================= 앱 목록 ================= */
   const APPS = {
-    messenger: { name: "메신저", ic: "💬", bg: "#fee500" },
-    calls: { name: "전화", ic: "📞", bg: "#34c759" },
-    card: { name: "카드", ic: "💳", bg: "#0f7a6b" },
-    mail: { name: "메일", ic: "✉️", bg: "#2f7cf6" },
-    photos: { name: "사진", ic: "🌅", bg: "#f2f2f2" },
-    search: { name: "검색", ic: "🔍", bg: "#03c75a" },
-    sns: { name: "SNS", ic: "📷", bg: "#c13584" },
-    notes: { name: "수첩", ic: "📌", bg: "#ff9f0a" },
-    memo: { name: "메모", ic: "📝", bg: "#ffd60a" },
-    settings: { name: "설정", ic: "⚙️", bg: "#8e8e93" }
+    messenger: { name: "메신저", bg: "linear-gradient(160deg,#ffe94a,#f7d300)" },
+    calls: { name: "전화", bg: "linear-gradient(160deg,#5fe07a,#22b44a)" },
+    card: { name: "카드", bg: "linear-gradient(160deg,#1aa58f,#0b5a50)" },
+    mail: { name: "메일", bg: "linear-gradient(160deg,#4fa0ff,#1f64d6)" },
+    photos: { name: "사진", bg: "linear-gradient(160deg,#ffffff,#e9e9ee)" },
+    search: { name: "검색", bg: "linear-gradient(160deg,#22d873,#03a84a)" },
+    sns: { name: "SNS", bg: "radial-gradient(circle at 25% 105%,#ffd25a 0%,#fa6a3a 30%,#d6249f 60%,#6a3ad8 100%)" },
+    notes: { name: "수첩", bg: "linear-gradient(160deg,#ffb340,#ff8a00)" },
+    memo: { name: "메모", bg: "linear-gradient(160deg,#fbfbf8,#e6e4dc)" },
+    settings: { name: "설정", bg: "linear-gradient(160deg,#a2a2aa,#6e6e76)" }
   };
+  Object.keys(APPS).forEach((k) => { APPS[k].ic = IC[k]; });
+  /* 대화 상대마다 다른 프로필 색 */
+  const AV = ["#e8846a", "#6a9ae8", "#5ac08a", "#c07ae0", "#e0b04a", "#e06a8a", "#4ab8c8", "#8a8ae0"];
+  const avStyle = (name) => { let h = 0; for (const c of String(name)) h = (h * 31 + c.charCodeAt(0)) >>> 0; const c = AV[h % AV.length]; return `background:linear-gradient(150deg,${c},${c}99)`; };
   function badge(app) {
     const v = Object.values(items).filter((it) => visible(it) && !state.read[it.id]);
     if (app === "messenger") return v.filter((it) => it.kind === "msg" && it.data.who !== "me").length;
@@ -145,6 +149,9 @@
     const bar = state && !NO_BAR.includes(cur.view);
     $("#sb-time").textContent = bar ? hhmm(state.now) : "";
     $("#sb-date").textContent = bar ? dateLabel(state.now) : "";
+    /* 배터리는 하루 동안 조금씩 닳아요 */
+    const hr = bar ? new Date(state.now).getHours() : 8;
+    $("#sb-icons").innerHTML = IC.signal + IC.wifi + IC.battery(Math.max(.15, Math.min(1, 1 - (hr - 7) * .045)));
     phone.appendChild(toast);
     screen.innerHTML = VIEWS[cur.view](cur.p);
     placeToast();
@@ -162,6 +169,7 @@
       <div class="app-head"><button class="back" data-back aria-label="뒤로">‹</button><h2>${esc(title)}</h2></div>
       ${opts.top || ""}
       <div class="app-body" id="body">${body}</div>
+      ${opts.foot || ""}
       <div class="home-bar"><button data-home aria-label="홈"></button></div>
     </div>`;
   const tabsHtml = (tabs, cur) => `<div class="tabs">${tabs.map(([k, l]) => `<button class="${k === cur ? "on" : ""}" data-tab="${k}">${l}</button>`).join("")}</div>`;
@@ -282,7 +290,7 @@
     }).filter(Boolean).sort((a, b) => b.last.t - a.last.t);
     return shell("메신저", rows.map(({ th, last, un }) => `
       <button class="row" data-go="thread" data-p="${P({ id: th.id })}">
-        <div class="avatar">${esc(th.avatar)}</div>
+        <div class="avatar" style="${avStyle(th.name)}">${esc(th.avatar)}</div>
         <div class="main"><div class="t1">${esc(th.name)}</div><div class="t2">${esc(last.data.text)}</div></div>
         <div class="meta">${when(last.t)}${un ? `<div><span class="badge" style="position:static;display:inline-flex;margin-top:4px">${un}</span></div>` : ""}</div>
       </button>`).join(""));
@@ -312,7 +320,8 @@
   const threadItems = (id) => S.messenger.find((x) => x.id === id).msgs.map((m, i) => items[`${id}#${i}`]).filter(visible);
   VIEWS.thread = ({ id }) => {
     const th = S.messenger.find((x) => x.id === id);
-    return shell(th.name, chatHtml(threadItems(id), th.group), { style: "background:#b2c7d9" });
+    return shell(th.name, chatHtml(threadItems(id), th.group), { style: "background:#b2c7d9",
+      foot: `<div class="chat-input"><span class="ci-plus">＋</span><div class="ci-box">메시지 입력</div><span class="ci-send">#</span></div>` });
   };
   AFTER.thread = ({ id }) => bindChat(threadItems(id));
 
@@ -339,7 +348,8 @@
     const two = tab === "two" && state.flags.card2;
     const C = two ? S.card2 : S.card, kind = two ? "card2" : "card";
     const v = Object.values(items).filter((it) => it.kind === kind && visible(it)).sort((a, b) => b.t - a.t);
-    let html = `<div class="card-face ${two ? "dark" : ""}"><div>${esc(C.name)}</div><div class="num">**** **** **** ${esc(C.last4)}</div></div>`, last = null;
+    let html = `<div class="card-face ${two ? "dark" : ""}"><div class="cf-top"><span>${esc(C.name)}</span><span class="cf-nfc">)))</span></div>
+      <div class="cf-chip"></div><div class="cf-bot"><span class="num">**** **** **** ${esc(C.last4)}</span><span class="cf-brand">${two ? "Master" : "VISA"}</span></div></div>`, last = null;
     v.forEach((it) => {
       if (!last || !sameDay(last, it.t)) html += `<div class="section">${longDay(it.t)}</div>`;
       last = it.t;
@@ -589,7 +599,7 @@
     }
     const v = Object.values(items).filter((it) => it.kind === "post" && visible(it)).sort((a, b) => b.t - a.t);
     return shell("SNS", v.map((it) => `<div class="post">
-        <div class="post-head"><div class="avatar" style="width:36px;height:36px">한</div><div><b>${esc(it.data.name)}</b> <span style="opacity:.5">${esc(it.data.handle)}</span><div style="font-size:12px;opacity:.5">${when(it.t)}</div></div></div>
+        <div class="post-head"><div class="avatar" style="width:36px;height:36px;${avStyle("한상철")}">한</div><div><b>${esc(it.data.name)}</b> <span style="opacity:.5">${esc(it.data.handle)}</span><div style="font-size:12px;opacity:.5">${when(it.t)}</div></div></div>
         ${it.data.bio ? `<div class="post-bio">${esc(it.data.bio)}</div>` : ""}
         <div class="post-text">${esc(it.data.text)}</div>${pinBtn(it.id)}</div>`).join("")
       || `<div class="empty">아직 눈에 띄는 게시물이 없습니다</div>`, { top });
