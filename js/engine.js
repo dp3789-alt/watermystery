@@ -19,6 +19,11 @@
       me: "(나) ", lCall: "통화", lCard: "카드", lCard2: "숨겨진 카드", lMail: "메일", lMail2: "두 번째 메일", lNews: "뉴스", lPhoto: "사진",
       lDeleted: "최근 삭제된 사진", lWeb: "검색", lDm: "SNS DM", lSecret: "시크릿 검색",
       cont: "이어하기", newGame: "새 게임", load: "불러오기",
+      noticeHead: "시작하기 전에",
+      notice: ["이 게임은 창작된 허구의 이야기입니다.",
+        "등장하는 인물, 단체, 장소, 사건은 모두 지어낸 것입니다. 실제와 같거나 비슷한 이름이 나오더라도 실제 인물·단체·장소·사건과는 아무런 관련이 없습니다.",
+        "게임 속에 그려진 범죄를 미화하거나 권장하려는 의도는 없습니다."],
+      noticeOk: "확인했습니다.",
       tip: "소리를 켜 주세요. 알림음과 진동이 있어요.<br>힌트는 없습니다. 모든 답은 이 핸드폰 안에 있어요.",
       askNew: "새 게임을 시작할까요? 저장 슬롯에 저장한 게임은 그대로 남아 있어요.",
       advance: "⏩ 시간 보내기 <small>다음 일을 기다린다</small>", decide: "🔎 결정을 내린다 <small>마지막 추리</small>", sleepBtn: "🌙 잠자기 <small>오늘을 마친다</small>",
@@ -61,6 +66,11 @@
       me: "(me) ", lCall: "Call", lCard: "Card", lCard2: "Hidden card", lMail: "Mail", lMail2: "Second account", lNews: "News", lPhoto: "Photo",
       lDeleted: "Recently deleted photo", lWeb: "Search", lDm: "Social DM", lSecret: "Incognito search",
       cont: "Continue", newGame: "New Game", load: "Load Game",
+      noticeHead: "Before you begin",
+      notice: ["This game is a work of fiction.",
+        "All characters, organizations, places, and events in it are invented. Any resemblance to real people, living or dead, or to real organizations, places, or events is purely coincidental.",
+        "The crimes depicted in this game are not intended to glorify or encourage crime of any kind."],
+      noticeOk: "I understand",
       tip: "Turn your sound on. There are notification sounds and vibrations.<br>There are no hints. Every answer is somewhere on this phone.",
       askNew: "Start a new game? Anything saved in your save slots will stay as it is.",
       advance: "⏩ Let time pass <small>Wait for what comes next</small>", decide: "🔎 Make a decision <small>Final deduction</small>", sleepBtn: "🌙 Go to sleep <small>End the day</small>",
@@ -363,11 +373,24 @@
   /* ================= 화면들 ================= */
   const VIEWS = {}, AFTER = {};
 
+  /* 픽션 안내 (게임을 열 때마다 처음 한 번) */
+  const langPick = () => `<div class="lang-pick" role="group" aria-label="Language">${[["ko", "한국어"], ["en", "English"]].map(([k, n]) => `<button class="${LANG === k ? "on" : ""}" data-lang="${k}" lang="${k}">${n}</button>`).join("")}</div>`;
+  VIEWS.notice = () => `<div class="title notice">
+      ${langPick()}
+      <div class="notice-head">${L("noticeHead")}</div>
+      ${L("notice").map((t, i) => `<p class="${i ? "" : "lead"}">${esc(t)}</p>`).join("")}
+      <button class="btn" id="n-ok">${L("noticeOk")}</button>
+    </div>`;
+  AFTER.notice = () => {
+    screen.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => { setLang(b.dataset.lang); render(); }));
+    $("#n-ok").onclick = () => { stack = [{ view: "title", p: {} }]; render(); };
+  };
+
   /* 타이틀 */
   VIEWS.title = () => {
     const auto = store.get("_auto");
     return `<div class="title">
-      <div class="lang-pick" role="group" aria-label="Language">${[["ko", "한국어"], ["en", "English"]].map(([k, n]) => `<button class="${LANG === k ? "on" : ""}" data-lang="${k}" lang="${k}">${n}</button>`).join("")}</div>
+      ${langPick()}
       <h1>${esc(S.title)}</h1><div class="sub">${esc(S.subtitle)}</div>
       ${auto ? `<button class="btn" id="t-cont">${L("cont")} <small style="opacity:.6">(${dateLabel(auto.now)} ${hhmm(auto.now)})</small></button>` : ""}
       <button class="btn" id="t-new">${L("newGame")}</button>
@@ -956,6 +979,6 @@
   }
 
   /* 시작 */
-  stack = [{ view: "title", p: {} }];
+  stack = [{ view: "notice", p: {} }];
   render();
 })();

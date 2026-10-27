@@ -215,6 +215,12 @@ input { font: inherit; }
 .lang-pick { display: inline-flex; padding: 3px; border-radius: 20px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); gap: 2px; }
 .lang-pick button { padding: 6px 14px; border-radius: 16px; font-size: 13px; opacity: .6; }
 .lang-pick button.on { background: rgba(255,255,255,.18); opacity: 1; font-weight: 600; }
+.title.notice { gap: 0; padding: 30px 34px; }
+.title.notice::before, .title.notice::after { opacity: .35; }
+.notice .notice-head { font-size: 13px; letter-spacing: 3px; opacity: .5; margin-bottom: 22px; }
+.notice p { font-size: 14px; line-height: 1.75; opacity: .75; text-align: center; margin: 0 0 14px; max-width: 300px; word-break: keep-all; }
+.notice p.lead { font-size: 17px; font-weight: 600; opacity: 1; margin-bottom: 20px; }
+.notice .btn { margin-top: 26px; }
 .title > .lang-pick { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); }
 .lang-pick.small { margin-left: auto; flex-shrink: 0; }
 .lang-pick.small button { padding: 5px 10px; font-size: 12px; }
