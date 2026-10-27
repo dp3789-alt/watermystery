@@ -51,7 +51,7 @@
       save: "저장", beforeFinal: "마지막 추리 직전", autoSaved: "자동 저장", overwrite: (i) => `슬롯 ${i}에 덮어쓸까요?`, overwriteBtn: "덮어쓰기",
       askLoad: "이 저장 시점으로 돌아갈까요? 지금 진행 상황은 사라져요.",
       final: "마지막 추리", accIntro: "틀리면 되돌릴 수 없다. 누가, 어떻게 죽였는지 내 말로 정확히 적어야 한다.", accuse: "지목한다", askAccuse: "이대로 지목할까요? 한 번 정하면 돌이킬 수 없어요.",
-      overSub: "세 번째 희생자가 나왔다.<br>내가 적은 답은 진실이 아니었다.", retry: "마지막 추리 직전으로",
+      overSub: "세 번째 희생자가 나왔다.<br>내가 적은 답은 진실이 아니었다.", stale: "게임이 새로 바뀌었는데 이 기기에 옛 파일이 남아 있어요. 새로고침한 뒤 불러오기 › '마지막 추리 직전'으로 이어서 해 주세요. 쓴 답은 저장해 뒀어요.", reload: "새로고침", retry: "마지막 추리 직전으로",
       theEnd: (t, n) => `${t} · 끝<br>모은 단서 ${n}개`,
       cancel: "취소", tap: "눌러서 계속", askSleep: "아직 읽지 않은 메시지가 있어요. 그래도 잠들까요?", sleep: "잠자기",
       more: (n) => `외 ${n}개`, count: (n) => `${n}개 · `, now: "지금",
@@ -98,7 +98,7 @@
       save: "Save", beforeFinal: "Before the final deduction", autoSaved: "Autosave", overwrite: (i) => `Overwrite Slot ${i}?`, overwriteBtn: "Overwrite",
       askLoad: "Go back to this save? Your current progress will be lost.",
       final: "Final Deduction", accIntro: "If I'm wrong, there's no taking it back. I have to write down, in my own words, exactly who killed them and how.", accuse: "Make the accusation", askAccuse: "Make this accusation? Once you decide, there's no going back.",
-      overSub: "A third victim has been found.<br>What I wrote was not the truth.", retry: "Retry the final deduction",
+      overSub: "A third victim has been found.<br>What I wrote was not the truth.", stale: "The game was updated, but this device still has old files. Please refresh, then continue from Load › 'Before the final deduction'. Your answer has been saved.", reload: "Refresh", retry: "Retry the final deduction",
       theEnd: (t, n) => `${t} · The End<br>Clues collected: ${n}`,
       cancel: "Cancel", tap: "Tap to continue", askSleep: "You still have unread messages. Go to sleep anyway?", sleep: "Sleep",
       more: (n) => `+${n} more`, count: (n) => `${n} · `, now: "now",
@@ -889,7 +889,14 @@
     go2.onclick = () => ask(L("askAccuse"), L("accuse"), judge);
   };
   function judge() {
-    const ok = checkAnswer(state.flags.answer);
+    let ok;
+    try { ok = checkAnswer(state.flags.answer); }
+    catch (e) {
+      /* 브라우저에 옛 파일이 남아 있어 채점 규칙을 못 읽은 경우: 쓴 답을 저장해 두고 새로고침 */
+      const cp = store.get("_checkpoint");
+      if (cp) { cp.flags.answer = state.flags.answer || ""; store.set("_checkpoint", cp); }
+      return ask(L("stale"), L("reload"), () => location.reload());
+    }
     store.set("_lastAnswer", state.flags.answer || "");
     state.flags.over = 1; store.del("_auto");
     stack = [{ view: "blank", p: {} }]; render();
