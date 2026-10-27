@@ -47,7 +47,7 @@
     box.id = "gate";
     box.innerHTML =
       `<div class="gate-card">
-         <div class="gate-title">${ENG ? "Low Tide" : "물때"}</div>
+         <div class="gate-title">${ENG ? "Meridian of Silence" : "침묵의 자오선"}<small>${ENG ? "Invisible Meridian" : "보이지 않는 선"}</small></div>
          <div class="gate-sub">${ENG ? "This game is invite-only.<br>Enter the password you were given." : "초대받은 사람만 플레이할 수 있어요.<br>전달받은 비밀번호를 입력하세요."}</div>
          <form><input type="password" autocomplete="off" autocapitalize="off" spellcheck="false"
            placeholder="${ENG ? "Password" : "비밀번호"}">

@@ -391,7 +391,7 @@
     const auto = store.get("_auto");
     return `<div class="title">
       ${langPick()}
-      <h1>${esc(S.title)}</h1><div class="sub">${esc(S.subtitle)}</div>
+      <h1>${esc(S.title.split(": ")[0])}${S.title.includes(": ") ? `<small>${esc(S.title.split(": ")[1])}</small>` : ""}</h1><div class="sub">${esc(S.subtitle)}</div>
       ${auto ? `<button class="btn" id="t-cont">${L("cont")} <small style="opacity:.6">(${dateLabel(auto.now)} ${hhmm(auto.now)})</small></button>` : ""}
       <button class="btn" id="t-new">${L("newGame")}</button>
       <button class="btn" id="t-load">${L("load")}</button>
