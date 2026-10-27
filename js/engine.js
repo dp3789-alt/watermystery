@@ -263,9 +263,11 @@
 
   /* ================= 화면 이동 ================= */
   let stack = [];
-  function go(view, p) { clearThoughts(); stack.push({ view, p: p || {} }); render(); }
-  function back() { clearThoughts(); stack.pop(); if (!stack.length) stack.push({ view: "home", p: {} }); render(); }
-  function home() { clearThoughts(); stack = [{ view: "home", p: {} }]; render(); }
+  /* 화면을 옮길 때만 짧은 전환 효과 (같은 화면을 다시 그릴 땐 없음) */
+  let navAnim = "";
+  function go(view, p) { clearThoughts(); stack.push({ view, p: p || {} }); navAnim = "in"; render(); }
+  function back() { clearThoughts(); stack.pop(); if (!stack.length) stack.push({ view: "home", p: {} }); navAnim = "back"; render(); }
+  function home() { clearThoughts(); stack = [{ view: "home", p: {} }]; navAnim = "home"; render(); }
   const NO_BAR = ["title", "over", "end", "call", "blank"];
   function render() {
     const cur = stack[stack.length - 1];
@@ -277,6 +279,8 @@
     $("#sb-icons").innerHTML = IC.signal + IC.wifi + IC.battery(Math.max(.15, Math.min(1, 1 - (hr - 7) * .045)));
     phone.appendChild(toast);
     screen.innerHTML = VIEWS[cur.view](cur.p);
+    if (navAnim && screen.firstElementChild) screen.firstElementChild.classList.add("nav-" + navAnim);
+    navAnim = "";
     placeToast();
     screen.querySelectorAll("[data-go]").forEach((el) => el.addEventListener("click", () => {
       const p = el.dataset.p ? JSON.parse(el.dataset.p) : {}; go(el.dataset.go, p);
@@ -889,7 +893,9 @@
   }
   function showScene(lines, dateTs, cb, opt = {}) {
     if (!lines || !lines.length) { cb && cb(); return; }
-    overlay.innerHTML = `<div class="scene ${opt.dark ? "dark" : ""}">${dateTs ? `<div class="date">${esc(longDay(dateTs))} · ${ampm(dateTs)}</div>` : ""}
+    /* 장면 배경 그림 (기억을 잃는 장면·엔딩처럼 dark 인 장면은 검은 화면 그대로) */
+    const bg = !opt.dark && window.SCENES ? `<div class="scene-bg">${window.SCENES.pick(lines.join(" "), dateTs || (state && state.now))}</div>` : "";
+    overlay.innerHTML = `${bg}<div class="scene ${opt.dark ? "dark" : ""} ${bg ? "has-bg" : ""}">${dateTs ? `<div class="date">${esc(longDay(dateTs))} · ${ampm(dateTs)}</div>` : ""}
       ${lines.map((l, i) => `<p class="line" style="animation-delay:${i * 0.9}s">${esc(l)}</p>`).join("")}<div class="tap">${L("tap")}</div></div>`;
     overlay.classList.add("show");
     const t0 = Date.now(); let shown = false;

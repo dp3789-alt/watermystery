@@ -9,6 +9,7 @@ window.ART = (function () {
         <feColorMatrix values=".33 .33 .33 0 0  .33 .33 .33 0 0  .33 .33 .33 0 0  0 0 0 0 1"/></filter>
       <filter id="${k}-soft"><feGaussianBlur stdDeviation="${opt.blur || 2}"/></filter>
       <filter id="${k}-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+      <linearGradient id="${k}-psh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".34"/></linearGradient>
       <radialGradient id="${k}-vig" cx=".5" cy=".5" r=".72"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${opt.vig ?? .55}"/></radialGradient>
     </defs>
     ${inner}
@@ -16,12 +17,24 @@ window.ART = (function () {
     <rect width="300" height="300" filter="url(#${k}-grain)" opacity="${opt.grain ?? .16}" style="mix-blend-mode:overlay"/>
   </svg>`;
 
+  /* 앞모습 얼굴: 귀, 눈썹, 눈, 코 그림자, 웃는 입. 안경은 o.glasses */
+  const face = (skin, hair, o) => `
+      <ellipse cx="-10.2" cy="-108" rx="2" ry="3" fill="${skin}"/><ellipse cx="10.2" cy="-108" rx="2" ry="3" fill="${skin}"/>
+      <ellipse cx="0" cy="-104" rx="9" ry="7" fill="#000" opacity=".06"/>
+      <path d="M-6.4 -113.2 q2.4 -1.2 4.4 0 M2 -113.2 q2.4 -1.2 4.4 0" stroke="${hair}" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-3.8" cy="-110" rx="1.15" ry="${o.squint ? .5 : .95}" fill="#1a1210"/><ellipse cx="3.8" cy="-110" rx="1.15" ry="${o.squint ? .5 : .95}" fill="#1a1210"/>
+      <path d="M.4 -109 q1 3.4 -.8 4.2" stroke="#000" stroke-width=".7" opacity=".22" fill="none"/>
+      <path d="${o.flat ? "M-2.6 -102.6 h5.2" : "M-3.2 -103.2 q3.2 2.6 6.4 0"}" stroke="#7a3a34" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <circle cx="-5.6" cy="-105.6" r="2" fill="#e07a6a" opacity=".16"/><circle cx="5.6" cy="-105.6" r="2" fill="#e07a6a" opacity=".16"/>
+      ${o.glasses ? `<g fill="none" stroke="#1a1a1a" stroke-width=".8"><circle cx="-3.8" cy="-110" r="2.8"/><circle cx="3.8" cy="-110" r="2.8"/><path d="M-1 -110 h2 M-6.6 -110.4 l-3 -.6 M6.6 -110.4 l3 -.6"/></g>` : ""}
+      <path d="M-10.4 -111 Q-11 -104 -9.4 -103 M10.4 -111 Q11 -104 9.4 -103" stroke="${hair}" stroke-width="1.4" fill="none"/>`;
+
   /* 사람 (뒷모습/앞모습 공통 실루엣). 발 위치가 (x, y). */
   const person = (x, y, s, o = {}) => {
     const skin = o.skin || "#141018", hair = o.hair || skin, shirt = o.shirt || skin, pants = o.pants || skin, shoe = o.shoe || "#0a080c";
     const longHair = o.long ? `<path d="M-12 -112 Q-14 -92 -16 -78 Q-6 -82 0 -82 Q6 -82 16 -78 Q14 -92 12 -112Z" fill="${hair}"/>` : "";
     const rim = o.rim ? `<path d="M-19 -92 C-10 -95 10 -95 19 -92 C24 -90 27 -86 28 -80 L31 -46" fill="none" stroke="${o.rim}" stroke-width="1.6" opacity=".7"/>
-      <path d="M-10 -116 Q0 -124 10 -116" fill="none" stroke="${o.rim}" stroke-width="1.6" opacity=".8"/>` : "";
+      ${o.front ? "" : `<path d="M-10 -116 Q0 -124 10 -116" fill="none" stroke="${o.rim}" stroke-width="1.6" opacity=".8"/>`}` : "";
     return `<g transform="translate(${x} ${y}) scale(${s})">
       ${longHair}
       <rect x="-4" y="-100" width="8" height="10" fill="${skin}"/>
@@ -31,6 +44,9 @@ window.ART = (function () {
       <path d="M-19 -92 C-10 -95 10 -95 19 -92 C24 -90 27 -86 28 -80 L31 -48 L24.5 -47 L21 -72 L20 -44 L-20 -44 L-21 -72 L-24.5 -47 L-31 -48 L-28 -80 C-27 -86 -24 -90 -19 -92Z" fill="${shirt}"/>
       <ellipse cx="-28" cy="-44" rx="3.6" ry="4.6" fill="${skin}"/><ellipse cx="28" cy="-44" rx="3.6" ry="4.6" fill="${skin}"/>
       <path d="M-18 -2 H-4 V1 H-19Z M4 -2 H18 L19 1 H4Z" fill="${shoe}"/>
+      <path d="M6 -94 C13 -94 17 -93 19 -92 C24 -90 27 -86 28 -80 L31 -48 L24.5 -47 L21 -72 L20 -44 L6 -44Z M2 -46 H19 L17 -2 H5Z" fill="url(#${o.k}-psh)"/>
+      <path d="M-19 -91 C-24 -89 -27 -85 -28 -79 L-30.5 -50" fill="none" stroke="#fff" stroke-width="1.2" opacity=".14"/>
+      ${o.front ? face(skin, hair, o) : ""}
       ${rim}
     </g>`;
   };
@@ -73,8 +89,8 @@ window.ART = (function () {
       const k = "s2", s = sunset(k);
       return wrap(k, s.defs + floral(`${k}-fl`, "#241824", "#6e3446", "#8a6a3a"), s.bg + `
         <ellipse cx="112" cy="282" rx="18" ry="2.6" fill="#000" opacity=".35"/><ellipse cx="196" cy="282" rx="18" ry="2.6" fill="#000" opacity=".35"/>
-        ${person(112, 282, .82, { skin: "#1a1218", hair: "#0e0a0e", shirt: `url(#${k}-fl)`, pants: "#1c1620", rim: "#ffb27a" })}
-        ${person(196, 282, .86, { skin: "#1a1218", hair: "#0e0a0e", shirt: "#1d1a26", pants: "#141018", rim: "#ffb27a" })}`, { vig: .45 });
+        ${person(112, 282, .82, { k, skin: "#1a1218", hair: "#0e0a0e", shirt: `url(#${k}-fl)`, pants: "#1c1620", rim: "#ffb27a" })}
+        ${person(196, 282, .86, { k, skin: "#1a1218", hair: "#0e0a0e", shirt: "#1d1a26", pants: "#141018", rim: "#ffb27a" })}`, { vig: .45 });
     },
     /* 6/20 같은 해변: 바닷가에 차려진 2인분 식탁 */
     sunsetTable: () => {
@@ -137,9 +153,9 @@ window.ART = (function () {
         <rect x="216" y="106" width="48" height="20" rx="2" fill="none" stroke="#e8d8b8" stroke-width="1"/>
         <rect y="228" width="300" height="72" fill="url(#${k}-ground)"/>
         <rect x="26" y="228" width="160" height="30" fill="#ffb060" opacity=".12" filter="url(#${k}-soft)"/>
-        ${person(92, 290, 1.16, { skin: "#c89a7c", hair: "#3a3030", shirt: `url(#${k}-fl)`, pants: "#2a2a30", front: true, rim: "#ffcf8a" })}
-        ${person(152, 290, 1.12, { skin: "#d0a284", hair: "#1a1414", shirt: "#ece6dc", pants: "#2a3446", front: true, rim: "#ffcf8a" })}
-        ${person(210, 290, 1.04, { skin: "#d6aa8c", hair: "#18120e", shirt: "#2c4a5c", pants: "#1e1e24", front: true, rim: "#ffcf8a" })}
+        ${person(92, 290, 1.16, { k, skin: "#c89a7c", hair: "#5a5452", squint: true, shirt: `url(#${k}-fl)`, pants: "#2a2a30", front: true, rim: "#ffcf8a" })}
+        ${person(152, 290, 1.12, { k, skin: "#d0a284", hair: "#1a1414", glasses: true, shirt: "#ece6dc", pants: "#2a3446", front: true, rim: "#ffcf8a" })}
+        ${person(210, 290, 1.04, { k, skin: "#d6aa8c", hair: "#18120e", flat: true, shirt: "#2c4a5c", pants: "#1e1e24", front: true, rim: "#ffcf8a" })}
         <rect x="0" y="0" width="300" height="300" fill="#ffffff" opacity=".04"/>`, { vig: .6 });
     },
     /* 5/05 어린이날, 엄마 아빠랑 */
@@ -158,9 +174,9 @@ window.ART = (function () {
         <path d="M228 120 Q232 150 222 178" stroke="#eee" stroke-width=".8" fill="none"/>
         <ellipse cx="228" cy="110" rx="12" ry="15" fill="#ff5a6a"/><ellipse cx="224" cy="104" rx="3" ry="5" fill="#fff" opacity=".5"/>
         <ellipse cx="150" cy="282" rx="80" ry="6" fill="#2a5a20" opacity=".35"/>
-        ${person(100, 280, 1.02, { skin: "#f0c8a8", hair: "#2a1a14", shirt: "#d86a74", pants: "#e8e0d4", long: true, front: true })}
-        ${person(150, 280, .98, { skin: "#f2cdb0", hair: "#14100e", shirt: "#6a9ad8", pants: "#3a4a6a", front: true })}
-        ${person(202, 280, 1.12, { skin: "#e6b896", hair: "#3a3634", shirt: "#e8e2d2", pants: "#5a5040", front: true })}`, { vig: .3, grain: .12 });
+        ${person(100, 280, 1.02, { k, skin: "#f0c8a8", hair: "#2a1a14", shirt: "#d86a74", pants: "#e8e0d4", long: true, front: true })}
+        ${person(150, 280, .98, { k, skin: "#f2cdb0", hair: "#14100e", flat: true, shirt: "#6a9ad8", pants: "#3a4a6a", front: true })}
+        ${person(202, 280, 1.12, { k, skin: "#e6b896", hair: "#3a3634", glasses: true, shirt: "#e8e2d2", pants: "#5a5040", front: true })}`, { vig: .3, grain: .12 });
     },
     /* 5/18 18:40 희주. 창가 역광 */
     heeju: () => {
@@ -178,6 +194,9 @@ window.ART = (function () {
         <path d="M110 120 Q114 74 150 72 Q194 74 196 130 Q186 96 152 96 Q122 98 110 120Z" fill="#2c1a18"/>
         <path d="M196 130 Q194 76 150 70" fill="none" stroke="#ffb88a" stroke-width="2" opacity=".75"/>
         <path d="M138 152 Q150 160 162 152" stroke="#5a3432" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+        <g fill="none" stroke="#3a2422" stroke-linecap="round" opacity=".75"><path d="M131 130 q7 5 14 0 M157 130 q7 5 14 0" stroke-width="2"/><path d="M130 121 q7 -4 14 -1 M158 120 q7 -3 14 1" stroke-width="1.8"/></g>
+        <path d="M152 134 q3 8 -1 11" stroke="#4a2c2a" stroke-width="1.2" fill="none" opacity=".4"/>
+        <circle cx="134" cy="146" r="6" fill="#e88a7a" opacity=".18"/><circle cx="168" cy="146" r="6" fill="#ffb090" opacity=".22"/>
         <g transform="translate(176 232)"><path d="M0 0 H34 L30 46 H4Z" fill="#f4ece4" opacity=".9"/><rect x="-2" y="-4" width="38" height="6" rx="2" fill="#3a2a2a"/>
           <rect x="2" y="16" width="30" height="12" fill="#8a5a3a" opacity=".7"/></g>
         <ellipse cx="184" cy="268" rx="12" ry="8" fill="#c08a74"/>`, { vig: .4, grain: .18 });
@@ -268,5 +287,97 @@ window.ICONS = (function () {
     signal: `<svg viewBox="0 0 18 12" width="17" height="11"><g fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>`,
     wifi: `<svg viewBox="0 0 16 12" width="15" height="11"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1.5 4.4a9.4 9.4 0 0 1 13 0"/><path d="M4 7a5.8 5.8 0 0 1 8 0"/></g><circle cx="8" cy="10" r="1.5" fill="currentColor"/></svg>`,
     battery: (pct) => `<svg viewBox="0 0 27 13" width="25" height="12"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="${Math.max(2, 20 * pct)}" height="9" rx="2" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.4-1.1 1.4-2s-.6-1.7-1.4-2Z" fill="currentColor" opacity=".45"/></svg>`
+  };
+})();
+
+/* 나레이션 장면 뒤에 깔리는 배경 그림. 장면 글에 나오는 낱말(해변, 강의실, 버스…)과
+   그 시각(아침·낮·노을·밤)을 보고 고르며, 글이 잘 읽히도록 흐리고 어둡게 깔아요. */
+window.SCENES = (function () {
+  const sv = (inner) => `<svg viewBox="0 0 300 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs><filter id="sc-b"><feGaussianBlur stdDeviation="10"/></filter><filter id="sc-s"><feGaussianBlur stdDeviation="3"/></filter></defs>${inner}</svg>`;
+  /* 시간대별 하늘 */
+  const SKY = { dawn: ["#2a3358", "#c78a8a", "#f2c39a"], day: ["#4f8fd0", "#9cc4e8", "#dfeef8"], dusk: ["#241c4a", "#c0505a", "#f6a35a"], night: ["#05070f", "#0c1428", "#1a2440"] };
+  const sky = (t, x, y, w, h) => { const c = SKY[t]; return `<defs><linearGradient id="sk-${t}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset=".6" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></linearGradient></defs>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#sk-${t})"/>`; };
+  const glow = (x, y, r, c, o = .6) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}" filter="url(#sc-b)"/>`;
+
+  const B = {
+    /* 내 방: 창밖 하늘 + 침대, 밤엔 스탠드 불빛 */
+    room: (t) => sv(`<rect width="300" height="600" fill="#14121a"/>
+      <rect x="40" y="90" width="190" height="230" fill="#000"/>${sky(t, 46, 96, 178, 218)}
+      ${t === "night" ? glow(180, 150, 6, "#e8eeff", .9) : ""}
+      <path d="M135 90 V320 M40 205 H230" stroke="#1e1a24" stroke-width="8"/>
+      <rect x="0" y="420" width="300" height="180" fill="#201a22"/><rect x="0" y="380" width="230" height="70" rx="10" fill="#3a3040"/>
+      <rect x="10" y="360" width="70" height="30" rx="12" fill="#5a4a5a"/>
+      ${t === "night" || t === "dawn" ? glow(262, 330, 60, "#ffb050", .55) + `<path d="M248 320 h28 l-6 -26 h-16z" fill="#c08040"/>` : glow(135, 300, 120, "#fff2d8", .25)}`),
+    /* 바다정(횟집): 따뜻한 조명, 수족관의 푸른 빛 */
+    restaurant: () => sv(`<rect width="300" height="600" fill="#1c140e"/>
+      ${[60, 150, 240].map((x) => `<path d="M${x} 0 V120" stroke="#3a2a1a" stroke-width="2"/>${glow(x, 140, 40, "#ffb35a", .7)}<path d="M${x - 18} 132 h36 l-8 -16 h-20z" fill="#7a4a20"/>`).join("")}
+      <rect x="10" y="250" width="140" height="160" rx="6" fill="#0a3a52"/>${glow(80, 330, 80, "#3ab0e0", .5)}
+      <g fill="#9ad8f0" opacity=".6"><ellipse cx="60" cy="310" rx="12" ry="4"/><ellipse cx="110" cy="350" rx="10" ry="3.5"/><circle cx="40" cy="280" r="2"/><circle cx="130" cy="300" r="2"/></g>
+      <rect x="0" y="430" width="300" height="170" fill="#2a1c12"/><rect x="0" y="420" width="300" height="16" fill="#5a3a20"/>
+      <rect x="180" y="260" width="100" height="150" fill="#3a2418"/><rect x="190" y="270" width="80" height="60" fill="#e8d0a0" opacity=".25"/>`),
+    /* 퇴근길 버스 창문: 밤거리 불빛이 번져요 */
+    bus: () => sv(`<rect width="300" height="600" fill="#08080e"/>
+      <rect x="20" y="120" width="260" height="300" rx="18" fill="#0e1424"/>
+      ${[[60, 200, "#ffb050"], [140, 260, "#ff5a5a"], [220, 210, "#5ab0ff"], [90, 330, "#ffd080"], [250, 320, "#ffb050"], [180, 360, "#a0ffb0"]].map(([x, y, c]) => glow(x, y, 26, c, .6)).join("")}
+      <g stroke="#ffd8a0" stroke-width="3" opacity=".35" filter="url(#sc-s)"><path d="M30 290 H270 M30 300 H200"/></g>
+      <rect x="20" y="120" width="260" height="300" rx="18" fill="none" stroke="#2a2a34" stroke-width="10"/>
+      <rect x="0" y="440" width="300" height="160" fill="#14141c"/><rect x="30" y="460" width="110" height="140" rx="16" fill="#26324a"/><rect x="160" y="460" width="110" height="140" rx="16" fill="#26324a"/>`),
+    /* 강의실: 칠판과 책상, 창으로 드는 빛 */
+    classroom: (t) => sv(`<rect width="300" height="600" fill="#2a2a28"/>
+      <rect x="20" y="110" width="260" height="140" fill="#22402e"/><rect x="20" y="246" width="260" height="8" fill="#5a4630"/>
+      <g stroke="#e8f0e8" stroke-width="2" opacity=".35" fill="none"><path d="M50 150 H140 L150 135 L160 165 L170 150 H240"/><path d="M60 200 h80 M60 215 h50"/></g>
+      ${glow(290, 200, 90, t === "night" ? "#304060" : "#fff0c8", .4)}
+      ${[330, 400, 470, 540].map((y, i) => `<rect x="${20 - i * 10}" y="${y}" width="${260 + i * 20}" height="16" rx="3" fill="#5a4a38"/><rect x="${40 - i * 10}" y="${y + 16}" width="6" height="40" fill="#3a3028"/><rect x="${254 + i * 10}" y="${y + 16}" width="6" height="40" fill="#3a3028"/>`).join("")}`),
+    /* 갯벌 해변: 하늘은 시각에 따라 */
+    beach: (t) => sv(`${sky(t, 0, 0, 300, 340)}
+      ${t === "dusk" ? glow(150, 330, 60, "#ffd080", .9) : t === "night" ? glow(220, 120, 14, "#e8eeff", .9) : t === "day" ? glow(230, 90, 30, "#fffbe8", .9) : glow(150, 330, 50, "#ffc0a0", .7)}
+      <rect y="330" width="300" height="70" fill="${t === "night" ? "#0a1222" : t === "day" ? "#5a8ab0" : "#4a3a5a"}"/>
+      <path d="M0 400 Q80 390 160 398 T300 394 V600 H0Z" fill="${t === "night" ? "#0c0e16" : t === "day" ? "#8a7a62" : "#3a2a30"}"/>
+      <path d="M0 440 Q100 430 200 442 T300 436" stroke="#fff" stroke-width="2" opacity=".18" fill="none"/>
+      <path d="M0 500 Q120 486 300 504 V600 H0Z" fill="#000" opacity=".25"/>`),
+    /* 거실: 텔레비전의 푸른 빛과 소파 */
+    tv: () => sv(`<rect width="300" height="600" fill="#0a0c12"/>
+      ${glow(150, 230, 120, "#4a7ad8", .55)}<rect x="70" y="170" width="160" height="100" rx="4" fill="#9ab8f0" opacity=".85"/><rect x="70" y="170" width="160" height="100" rx="4" fill="none" stroke="#111" stroke-width="6"/>
+      <rect x="100" y="274" width="100" height="8" fill="#16161c"/>
+      <rect x="10" y="420" width="280" height="110" rx="24" fill="#1c2030"/><rect x="20" y="380" width="260" height="60" rx="20" fill="#232838"/>
+      <path d="M30 430 Q150 410 270 430" stroke="#6a8ad0" stroke-width="2" opacity=".25" fill="none"/>`),
+    /* 경찰·구급차: 밤의 빨강·파랑 불빛 */
+    police: () => sv(`<rect width="300" height="600" fill="#06060a"/>
+      ${glow(80, 260, 90, "#ff2a3a", .55)}${glow(220, 280, 90, "#2a6aff", .55)}
+      <rect x="30" y="100" width="240" height="320" fill="#121218"/>
+      ${[0, 1, 2, 3].map((r) => [0, 1, 2].map((c) => `<rect x="${55 + c * 70}" y="${130 + r * 72}" width="44" height="40" fill="${(r + c) % 3 ? "#1a1a24" : "#5a4a30"}"/>`).join("")).join("")}
+      <rect y="420" width="300" height="180" fill="#0c0c10"/>${glow(150, 470, 40, "#ffffff", .2)}`),
+    /* 병원 복도 */
+    hospital: () => sv(`<rect width="300" height="600" fill="#2a343c"/>
+      <path d="M0 0 L110 220 V380 L0 600Z" fill="#1e262e"/><path d="M300 0 L190 220 V380 L300 600Z" fill="#1e262e"/>
+      <rect x="110" y="220" width="80" height="160" fill="#4a5a66"/><path d="M0 600 L110 380 H190 L300 600Z" fill="#161c22"/>
+      ${[40, 120, 180].map((y, i) => `<rect x="${150 - 50 + i * 15}" y="${y}" width="${100 - i * 30}" height="6" fill="#d8f0ff" opacity=".8"/>`).join("")}${glow(150, 110, 70, "#c8e8ff", .35)}
+      <rect x="20" y="300" width="40" height="120" fill="#3a4a3a" opacity=".6"/>${glow(40, 280, 10, "#6aff9a", .7)}`),
+    /* 현관문 */
+    door: () => sv(`<rect width="300" height="600" fill="#16141a"/>
+      <rect x="80" y="90" width="140" height="380" fill="#3a2e28"/><rect x="88" y="98" width="124" height="364" fill="#4a3a30"/>
+      <rect x="190" y="280" width="16" height="6" rx="3" fill="#c8b080"/>${glow(150, 60, 70, "#ffd8a0", .45)}
+      <rect y="470" width="300" height="130" fill="#24201e"/><g fill="#0e0e12"><rect x="60" y="500" width="40" height="14" rx="6"/><rect x="110" y="506" width="40" height="14" rx="6"/></g>`)
+  };
+
+  /* 글에 나오는 낱말 → 장소 (앞에 있을수록 먼저 고름) */
+  const PLACES = [
+    ["hospital", /병원|응급실|의사|hospital|doctor|\bER\b/i],
+    ["police", /구급|사이렌|paramedic|siren|ambulance/i],
+    ["beach", /해변|갯벌|바닷가|방파제|beach|mudflat|shore|seawall/i],
+    ["restaurant", /바다정|식당|횟집|가게|마감|badajeong|restaurant|shop|closing/i],
+    ["bus", /버스|퇴근길|\bbus\b/i],
+    ["room", /침대|in bed|my bed/i],
+    ["classroom", /강의실|학교|수업|칠판|classroom|lecture|campus|chalkboard|blackboard|\bclass\b|lecture hall/i],
+    ["tv", /텔레비전|티비|소파|tv\b|television|sofa|couch/i],
+    ["door", /현관|front door|doorway/i]
+  ];
+  const tod = (h) => (h >= 5 && h < 8 ? "dawn" : h >= 8 && h < 17 ? "day" : h >= 17 && h < 20 ? "dusk" : "night");
+  const place = (text) => { const hit = PLACES.find(([, re]) => re.test(text)); return hit ? hit[0] : "room"; };
+  return {
+    place,
+    pick(text, ts) { return B[place(text)](tod(ts ? new Date(ts).getHours() : 22)); }
   };
 })();
