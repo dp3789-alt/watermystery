@@ -879,13 +879,25 @@
     return shell(L("final"), `<div class="accuse">
       <div class="acc-intro">${L("accIntro")}</div>
       <label class="acc-q" for="acc-text">${esc(A.q)}</label>
-      <textarea id="acc-text" rows="7" placeholder="${esc(A.placeholder)}" spellcheck="false">${esc(ans)}</textarea>
+      <textarea id="acc-text" rows="7" placeholder="${esc(A.placeholder)}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">${esc(ans)}</textarea>
       <button class="advance final" id="acc-go" ${ans.trim() ? "" : "disabled"}>${L("accuse")}</button>
       <div style="height:20px"></div></div>`);
   };
   AFTER.accuse = () => {
     const box = $("#acc-text"), go2 = $("#acc-go");
-    box.addEventListener("input", () => { state.flags.answer = box.value; go2.disabled = !box.value.trim(); });
+    /* 잠금 5개를 모두 푼 플레이어는 어떤 키를 눌러도 모범 답안이 한 글자씩 써져요 (지우기는 한 글자씩 지워져요) */
+    const solved = ["deleted", "mail2", "card2", "secret", "memo"].every((f) => state.flags[f]);
+    const model = S.accusation.model;
+    let shown = model.startsWith(box.value) ? box.value.length : 0;
+    if (solved && !shown) box.value = "";
+    box.addEventListener("input", (e) => {
+      if (solved) {
+        shown = /^delete/.test(e.inputType || "") ? Math.max(0, shown - 1) : Math.min(model.length, shown + 1);
+        box.value = model.slice(0, shown);
+        box.setSelectionRange(shown, shown);
+      }
+      state.flags.answer = box.value; go2.disabled = !box.value.trim();
+    });
     go2.onclick = () => ask(L("askAccuse"), L("accuse"), judge);
   };
   function judge() {
