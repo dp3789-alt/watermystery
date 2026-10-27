@@ -50,8 +50,8 @@
       pickLoad: "불러올 저장을 고르세요", anytime: "언제든 저장한 시점으로 돌아갈 수 있어요", slot: (i) => `슬롯 ${i}`, nClues: (n) => `단서 ${n}개`, empty: "비어 있음",
       save: "저장", beforeFinal: "마지막 추리 직전", autoSaved: "자동 저장", overwrite: (i) => `슬롯 ${i}에 덮어쓸까요?`, overwriteBtn: "덮어쓰기",
       askLoad: "이 저장 시점으로 돌아갈까요? 지금 진행 상황은 사라져요.",
-      final: "마지막 추리", accIntro: "틀리면 되돌릴 수 없다. 범인, 동기, 수법을 모두 맞혀야 한다.", accuse: "지목한다", askAccuse: "이대로 지목할까요? 한 번 정하면 돌이킬 수 없어요.",
-      overSub: "세 번째 희생자가 나왔다.<br>범인, 동기, 수법 중 틀린 것이 있었다.", retry: "마지막 추리 직전으로",
+      final: "마지막 추리", accIntro: "틀리면 되돌릴 수 없다. 누가, 어떻게 죽였는지 내 말로 정확히 적어야 한다.", accuse: "지목한다", askAccuse: "이대로 지목할까요? 한 번 정하면 돌이킬 수 없어요.",
+      overSub: "세 번째 희생자가 나왔다.<br>내가 적은 답은 진실이 아니었다.", retry: "마지막 추리 직전으로",
       theEnd: (t, n) => `${t} · 끝<br>모은 단서 ${n}개`,
       cancel: "취소", tap: "눌러서 계속", askSleep: "아직 읽지 않은 메시지가 있어요. 그래도 잠들까요?", sleep: "잠자기",
       more: (n) => `외 ${n}개`, count: (n) => `${n}개 · `, now: "지금",
@@ -97,8 +97,8 @@
       pickLoad: "Choose a save to load", anytime: "You can go back to a saved point at any time", slot: (i) => `Slot ${i}`, nClues: (n) => `${n} ${n === 1 ? "clue" : "clues"}`, empty: "Empty",
       save: "Save", beforeFinal: "Before the final deduction", autoSaved: "Autosave", overwrite: (i) => `Overwrite Slot ${i}?`, overwriteBtn: "Overwrite",
       askLoad: "Go back to this save? Your current progress will be lost.",
-      final: "Final Deduction", accIntro: "If I'm wrong, there's no taking it back. I have to get the killer, the motive, and the method all right.", accuse: "Make the accusation", askAccuse: "Make this accusation? Once you decide, there's no going back.",
-      overSub: "A third victim has been found.<br>The killer, the motive, or the method was wrong.", retry: "Retry the final deduction",
+      final: "Final Deduction", accIntro: "If I'm wrong, there's no taking it back. I have to write down, in my own words, exactly who killed them and how.", accuse: "Make the accusation", askAccuse: "Make this accusation? Once you decide, there's no going back.",
+      overSub: "A third victim has been found.<br>What I wrote was not the truth.", retry: "Retry the final deduction",
       theEnd: (t, n) => `${t} · The End<br>Clues collected: ${n}`,
       cancel: "Cancel", tap: "Tap to continue", askSleep: "You still have unread messages. Go to sleep anyway?", sleep: "Sleep",
       more: (n) => `+${n} more`, count: (n) => `${n} · `, now: "now",
@@ -817,27 +817,80 @@
   };
 
   /* ================= 마지막 추리 ================= */
-  /* 잠금을 풀어 단서를 얻은 경우에만 보이는 선택지 */
-  const optOpen = (o) => !o.needs || o.needs.some((f) => state.flags[f]);
+  /* 플레이어가 직접 쓴 답을 채점해요. 정답 조건은 story.js 의 accusation 에 있어요. */
+  const KO = () => LANG === "ko";
+  const ansNorm = (t) => {
+    t = String(t || "").toLowerCase().replace(/[^0-9a-z\uac00-\ud7a3]+/g, " ").trim();
+    return KO() ? t.replace(/ /g, "") : " " + t + " ";
+  };
+  /* text 어딘가에 key 와 거의 같은 부분이 있는지 (틀린 글자 max 개까지 허용) */
+  const fuzzyIn = (key, text, max) => {
+    let prev = new Array(key.length + 1).fill(0).map((_, i) => i);
+    for (let j = 1, best = prev[key.length]; j <= text.length; j++) {
+      const cur = [0];
+      for (let i = 1; i <= key.length; i++)
+        cur[i] = Math.min(prev[i] + 1, cur[i - 1] + 1, prev[i - 1] + (key[i - 1] === text[j - 1] ? 0 : 1));
+      best = Math.min(best, cur[key.length]); prev = cur;
+      if (best <= max) return true;
+    }
+    return false;
+  };
+  const hasKey = (k, text) => {
+    if (KO()) {
+      k = ansNorm(k); if (text.includes(k)) return true;
+      return k.length >= 4 && fuzzyIn(k, text, k.length >= 7 ? 2 : 1);
+    }
+    k = ansNorm(k).trim();
+    if (k.length <= 4) return text.includes(" " + k + " ");  /* 짧은 영어 낱말은 낱말 전체가 같아야 해요 */
+    if (text.includes(" " + k)) return true;
+    /* 영어는 낱말 1~3개를 붙인 것과 통째로 비교해요 (lithiumion, batery 같은 오타) */
+    const kk = k.replace(/ /g, ""), max = kk.length >= 10 ? 2 : kk.length >= 6 ? 1 : 0, w = text.trim().split(" ");
+    if (!max) return false;
+    for (let n = 1; n <= 3; n++) for (let i = 0; i + n <= w.length; i++) {
+      const c = w.slice(i, i + n).join("");
+      if (Math.abs(c.length - kk.length) <= max && lev(c, kk) <= max) return true;
+    }
+    return false;
+  };
+  const lev = (a, b) => {
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length];
+  };
+  const similarity = (a, b) => {
+    a = a.replace(/ /g, ""); b = b.replace(/ /g, "");
+    const grams = (s) => { const m = new Map(); for (let i = 0; i < s.length - 1; i++) { const g = s.slice(i, i + 2); m.set(g, (m.get(g) || 0) + 1); } return m; };
+    const A = grams(a), B = grams(b); let both = 0, total = 0;
+    A.forEach((n, g) => { both += Math.min(n, B.get(g) || 0); total += n; }); B.forEach((n) => { total += n; });
+    return total ? (2 * both) / total : 0;
+  };
+  function checkAnswer(answer) {
+    const A = S.accusation, text = ansNorm(answer);
+    const hit = A.keys.map((alts) => alts.some((k) => hasKey(k, text)));
+    if (hit.every(Boolean)) return true;
+    return A.core.every((i) => hit[i]) && similarity(text, ansNorm(A.model)) >= A.similar;
+  }
   VIEWS.accuse = () => {
-    const A = S.accusation, pick = state.flags.pick || [];
-    A.questions.forEach((q, qi) => { if (pick[qi] != null && !optOpen(q.options[pick[qi]])) pick[qi] = null; });
+    const A = S.accusation, ans = state.flags.answer || "";
     return shell(L("final"), `<div class="accuse">
       <div class="acc-intro">${L("accIntro")}</div>
-      ${A.questions.map((q, qi) => `<fieldset><legend>${qi + 1}. ${esc(q.q)}</legend>
-        ${q.options.map((o, oi) => optOpen(o) ? `<button class="opt ${pick[qi] === oi ? "on" : ""}" data-q="${qi}" data-o="${oi}">${esc(o.text || o)}</button>` : "").join("")}</fieldset>`).join("")}
-      <button class="advance final" id="acc-go" ${A.questions.every((_, i) => pick[i] != null) ? "" : "disabled"}>${L("accuse")}</button>
+      <label class="acc-q" for="acc-text">${esc(A.q)}</label>
+      <textarea id="acc-text" rows="7" placeholder="${esc(A.placeholder)}" spellcheck="false">${esc(ans)}</textarea>
+      <button class="advance final" id="acc-go" ${ans.trim() ? "" : "disabled"}>${L("accuse")}</button>
       <div style="height:20px"></div></div>`);
   };
   AFTER.accuse = () => {
-    screen.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => {
-      const pick = state.flags.pick || []; pick[+b.dataset.q] = +b.dataset.o; state.flags.pick = pick;
-      const sc = $("#body").scrollTop; render(); $("#body").scrollTop = sc;
-    }));
-    $("#acc-go").onclick = () => ask(L("askAccuse"), L("accuse"), judge);
+    const box = $("#acc-text"), go2 = $("#acc-go");
+    box.addEventListener("input", () => { state.flags.answer = box.value; go2.disabled = !box.value.trim(); });
+    go2.onclick = () => ask(L("askAccuse"), L("accuse"), judge);
   };
   function judge() {
-    const ok = S.accusation.questions.every((q, i) => state.flags.pick[i] === q.correct);
+    const ok = checkAnswer(state.flags.answer);
+    store.set("_lastAnswer", state.flags.answer || "");
     state.flags.over = 1; store.del("_auto");
     stack = [{ view: "blank", p: {} }]; render();
     if (ok) successEnding(); else failEnding();
@@ -858,7 +911,7 @@
     <button class="btn" id="o-retry">${L("retry")}</button>
     <button class="btn" id="o-title">${L("toTitle")}</button></div>`;
   AFTER.over = () => {
-    $("#o-retry").onclick = () => { const cp = store.get("_checkpoint"); if (!cp) return; state = copy(cp); state.lang = LANG; delete state.flags.pick; home(); };
+    $("#o-retry").onclick = () => { const cp = store.get("_checkpoint"); if (!cp) return; state = copy(cp); state.lang = LANG; delete state.flags.pick; state.flags.answer = store.get("_lastAnswer") || ""; home(); };
     $("#o-title").onclick = () => { stack = [{ view: "title", p: {} }]; render(); };
   };
   function successEnding() {
